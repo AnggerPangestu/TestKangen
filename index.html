@@ -1,0 +1,495 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Skor Kangen</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: satu kolom sempit, satu layar per langkah (intro, pertanyaan, hasil). Satu momen berani: busur skor di hasil. */
+:root {
+  --bg: #F4F2F9;
+  --surface: #FFFFFF;
+  --ink: #1D1930;
+  --muted: #655F7F;
+  --line: #DAD5E8;
+  --accent: #D42A55;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #FCE6EC;
+  --font-display: 'Bricolage Grotesque', 'Segoe UI', system-ui, sans-serif;
+  --font-body: 'Figtree', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'DM Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14111F;
+    --surface: #1E1A2F;
+    --ink: #F2EFFA;
+    --muted: #A7A1BF;
+    --line: #352F4D;
+    --accent: #FF6B8E;
+    --accent-ink: #1A0F16;
+    --accent-soft: #3A2037;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14111F;
+  --surface: #1E1A2F;
+  --ink: #F2EFFA;
+  --muted: #A7A1BF;
+  --line: #352F4D;
+  --accent: #FF6B8E;
+  --accent-ink: #1A0F16;
+  --accent-soft: #3A2037;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 1.5rem 3rem;
+}
+.wrap { max-width: 34rem; margin: 0 auto; }
+h1, h2 { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+
+/* Intro */
+#intro { display: flex; flex-direction: column; gap: 1.5rem; padding-top: 1.5rem; }
+#intro h1 { font-size: clamp(3.4rem, 17vw, 5.6rem); line-height: 0.92; color: var(--ink); }
+#intro h1 span { color: var(--accent); }
+.lede { font-size: 1.1rem; max-width: 30rem; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 1rem; }
+.field { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.field label { font-family: var(--font-mono); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.field input {
+  font: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  min-height: 48px;
+  width: 100%;
+}
+.field input::placeholder { color: var(--muted); opacity: 0.8; }
+.note { font-size: 0.9rem; color: var(--muted); }
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 999px;
+  min-height: 48px;
+  padding: 0.7rem 1.5rem;
+  border: 1.5px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.btn:hover { filter: brightness(1.06); }
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn.ghost:hover { border-color: var(--accent); filter: none; }
+.link {
+  font: inherit;
+  font-size: 0.95rem;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0.6rem 0;
+  min-height: 44px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Quiz */
+#quiz { display: flex; flex-direction: column; gap: 1.5rem; padding-top: 0.5rem; }
+.progress-row { display: flex; align-items: center; gap: 1rem; }
+.segs { flex: 1; display: flex; gap: 4px; min-width: 0; }
+.segs span { flex: 1; height: 6px; border-radius: 3px; background: var(--line); }
+.segs span.on { background: var(--accent); }
+#qcount { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+#qtext { font-size: clamp(1.6rem, 6.5vw, 2.1rem); line-height: 1.12; }
+.opts { display: flex; flex-direction: column; gap: 0.7rem; }
+.opt {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  min-height: 52px;
+  cursor: pointer;
+}
+.opt:hover { border-color: var(--accent); }
+.opt .ltr {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+  border: 1.5px solid var(--line);
+  border-radius: 6px;
+  width: 1.7rem;
+  height: 1.7rem;
+  flex: none;
+  display: grid;
+  place-items: center;
+  margin-top: 0.05rem;
+}
+.opt .txt { min-width: 0; overflow-wrap: anywhere; }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.opt[aria-pressed="true"] .ltr { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+
+/* Result */
+#result { display: flex; flex-direction: column; gap: 1.25rem; padding-top: 0.5rem; }
+.gauge { width: 100%; max-width: 26rem; margin: 0 auto; }
+.gauge svg { width: 100%; height: auto; display: block; overflow: visible; }
+.g-track { stroke: var(--line); }
+.g-fill { stroke: var(--accent); transition: stroke-dashoffset 1.3s cubic-bezier(.2, .8, .2, 1); }
+.g-num { font-family: var(--font-display); font-weight: 800; font-size: 54px; fill: var(--ink); }
+.g-sub, .g-end { font-family: var(--font-mono); font-size: 11px; fill: var(--muted); }
+#rtier { font-size: clamp(2rem, 9vw, 2.9rem); line-height: 1; text-align: center; color: var(--accent); }
+#rwho { text-align: center; }
+#rdesc { text-align: center; max-width: 28rem; margin: 0 auto; font-size: 1.05rem; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 0.8rem; margin: 0.25rem 0 0; }
+.stat { border-top: 2px solid var(--ink); padding-top: 0.6rem; min-width: 0; }
+.stat dt { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.stat dd { margin: 0.2rem 0 0; font-family: var(--font-display); font-weight: 800; font-size: 1.7rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat small { display: block; font-family: var(--font-body); font-weight: 400; font-size: 0.85rem; color: var(--muted); margin-top: 0.15rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.7rem; justify-content: center; margin-top: 0.5rem; }
+.hint { text-align: center; font-size: 0.92rem; color: var(--muted); max-width: 26rem; margin: 0 auto; }
+#fallback textarea {
+  width: 100%;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 0.7rem;
+}
+#toast { min-height: 1.4rem; text-align: center; font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .g-fill { transition: none; }
+}
+</style>
+
+<main class="wrap">
+  <section id="intro">
+    <p class="eyebrow">Kuis berdua &middot; 10 pertanyaan</p>
+    <h1>Skor<br><span>Kangen</span></h1>
+    <p class="lede">Seberapa kangen kamu ke dia? Jawab 10 pertanyaan, nanti keluar skor 0 sampai 100. Hati-hati: jawaban yang kelihatan paling romantis sering justru jebakan, jadi skor 100 sulit didapat. Suruh pasanganmu isi juga, lalu adu skornya.</p>
+    <div class="fields">
+      <div class="field">
+        <label for="n1">Nama kamu</label>
+        <input id="n1" type="text" maxlength="24" placeholder="Misal: Angger" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="n2">Nama dia</label>
+        <input id="n2" type="text" maxlength="24" placeholder="Misal: Sayang" autocomplete="off">
+      </div>
+    </div>
+    <div><button class="btn" id="start" type="button">Mulai kuis</button></div>
+    <p class="note">Nama boleh dikosongkan. Kuis ini cuma buat lucu-lucuan, bukan tes psikologi.</p>
+  </section>
+
+  <section id="quiz" hidden>
+    <div class="progress-row">
+      <div class="segs" id="segs" aria-hidden="true"></div>
+      <span id="qcount"></span>
+    </div>
+    <h2 id="qtext"></h2>
+    <div class="opts" id="opts"></div>
+    <div><button class="link" id="back" type="button">Kembali ke pertanyaan sebelumnya</button></div>
+  </section>
+
+  <section id="result" hidden>
+    <p class="eyebrow" id="rwho"></p>
+    <div class="gauge">
+      <svg viewBox="0 0 240 150" role="img" aria-label="Skor kangen">
+        <path class="g-track" d="M20 120 A100 100 0 0 1 220 120" fill="none" stroke-width="16" stroke-linecap="round"/>
+        <path class="g-fill" id="arc" d="M20 120 A100 100 0 0 1 220 120" fill="none" stroke-width="16" stroke-linecap="round"/>
+        <text class="g-num" id="gnum" x="120" y="108" text-anchor="middle">0</text>
+        <text class="g-sub" x="120" y="128" text-anchor="middle">dari 100</text>
+        <text class="g-end" x="20" y="146" text-anchor="middle">0</text>
+        <text class="g-end" x="220" y="146" text-anchor="middle">100</text>
+      </svg>
+    </div>
+    <h2 id="rtier"></h2>
+    <p id="rdesc"></p>
+    <dl class="stats">
+      <div class="stat"><dt>Rela menempuh</dt><dd id="skm"></dd></div>
+      <div class="stat"><dt>Kirim "lagi apa?"</dt><dd id="schat"></dd></div>
+      <div class="stat"><dt>Kena jebakan</dt><dd id="strap"></dd></div>
+    </dl>
+    <div class="actions">
+      <button class="btn" id="copy" type="button">Salin hasil</button>
+      <button class="btn ghost" id="retry" type="button">Ulangi kuis</button>
+    </div>
+    <div id="fallback" hidden><textarea id="ftext" rows="4" readonly aria-label="Teks hasil"></textarea></div>
+    <p id="toast" role="status"></p>
+    <p class="hint">Kirim link kuis ini ke pasanganmu, suruh dia isi, lalu bandingkan skor kalian.</p>
+  </section>
+</main>
+
+<script>
+(function () {
+  var Q = [
+    { q: 'Jam 2 pagi dia kirim "lagi apa?". Kamu...', o: [
+      ['Balas "lagi mikirin kamu juga", padahal baru bangun', 1, true],
+      ['Balas jujur apa adanya, lalu tanya kenapa dia belum tidur', 3],
+      ['Baca, balas besok pagi', 0],
+      ['Telepon sampai subuh, besoknya kerja telat', 2] ] },
+    { q: 'Kapan rasa kangen paling terasa buatmu?', o: [
+      ['Pas lihat pasangan lain mesra di depan umum', 0, true],
+      ['Pas ada masalah dan butuh dia', 1, true],
+      ['Malam hari sebelum tidur', 2],
+      ['Pas hal kecil terjadi, misalnya lewat warung bakso kesukaannya', 3] ] },
+    { q: 'Dia bilang "aku nggak apa-apa" dengan nada datar. Kamu...', o: [
+      ['Tanya terus sampai dia kesal', 1, true],
+      ['Percaya, lanjut ngobrol biasa', 0],
+      ['Kirim "kamu marah ya?" lima kali berturut-turut', -1, true],
+      ['Tanya sekali lagi, lalu kasih ruang sampai dia siap cerita', 3] ] },
+    { q: 'Dia tanya "kangen aku nggak?". Jawabanmu?', o: [
+      ['"Banget banget banget, kayak mau meledak!"', 1, true],
+      ['"Kangen." lalu sebut satu hal spesifik dari hari ini', 3],
+      ['Balik tanya "menurutmu?"', 0],
+      ['"Kangen."', 2] ] },
+    { q: 'Kalian lagi berantem dan kamu kangen. Kamu...', o: [
+      ['Posting story sindiran, biar dia sadar', -1, true],
+      ['Gengsi, tunggu dia chat duluan', 0, true],
+      ['Kirim stiker lucu, pura-pura nggak ada apa-apa', 1],
+      ['Kirim "aku masih kesal, tapi aku kangen. Bisa bicara?"', 3] ] },
+    { q: 'Dia ulang tahun minggu depan dan kalian beda kota. Kamu...', o: [
+      ['Janji "nanti aku usahakan datang"', 0],
+      ['Rencanakan dari jauh hari: tiket sudah dipesan, ada kejutan kecil yang pas buat dia', 3],
+      ['Beli hadiah mewah, kirim lewat kurir', 1, true],
+      ['Video call sambil nyanyi, lalu atur jadwal ketemu bulan depan', 2] ] },
+    { q: 'Dia cerita hal yang sama untuk kelima kalinya. Kamu...', o: [
+      ['Pura-pura antusias sambil buka HP', -1, true],
+      ['Dengarkan, tapi dalam hati sudah hafal', 2],
+      ['Potong: "iya, kamu sudah cerita"', 0],
+      ['Dengarkan seperti baru pertama kali, karena dia memang butuh didengar', 3] ] },
+    { q: 'Kamu menemukan foto kalian setahun lalu. Kamu...', o: [
+      ['Upload ke story dengan caption panjang tentang cinta', 1, true],
+      ['Senyum, simpan, lanjut kerja', 2],
+      ['Hapus, storage penuh', 0],
+      ['Kirim ke dia tanpa caption, biar dia yang mulai cerita', 3] ] },
+    { q: 'Pilih satu. Kamu mau...', o: [
+      ['Ketemu satu jam walau dia sibuk dengan HP', 1, true],
+      ['Dua-duanya, nggak mau pilih', 2],
+      ['Telepon satu jam dengan perhatian penuh', 3],
+      ['Tidur saja', 0] ] },
+    { q: 'Seberapa jujur kamu mengisi kuis ini?', o: [
+      ['Aku pilih jawaban yang bikin skornya tinggi', -1, true],
+      ['Setengah jujur, setengah gaya', 1],
+      ['Aku jawab sambil membayangkan dia membacanya', 2],
+      ['Jujur, meski skornya jadi turun', 3] ] }
+  ];
+  var MAXPTS = Q.length * 3;
+  var TIERS = [
+    { min: 90, name: 'Darurat Rindu', desc: 'Sudah level darurat. Kalau dia di kota lain, cek harga tiket sekarang. Kalau satu kota, kenapa masih baca ini?' },
+    { min: 75, name: 'Kangen Parah', desc: 'Hampir tiap jam ingat dia. Orang sekitar mulai hafal nama dia karena kamu sering cerita.' },
+    { min: 55, name: 'Kangen Manis', desc: 'Kangennya pas: cukup bikin senyum sendiri, belum sampai salah kirim chat ke grup kantor.' },
+    { min: 30, name: 'Kangen Santai', desc: 'Ingat dia, tapi masih sempat makan dengan tenang. Mungkin tinggal butuh momen ketemu.' },
+    { min: 0,  name: 'Hemat Baterai', desc: 'Kangenmu lagi mode hemat daya. Coba telepon dia, siapa tahu langsung naik 40 poin.' }
+  ];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var idx = 0, ans = [], ord = [], locked = false, copyText = '';
+  var ARC_LEN = Math.PI * 100;
+
+  function show(id) {
+    ['intro', 'quiz', 'result'].forEach(function (s) { $(s).hidden = (s !== id); });
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+
+  function newOrder() {
+    ord = Q.map(function (q) {
+      var a = q.o.map(function (_, n) { return n; });
+      for (var k = a.length - 1; k > 0; k--) {
+        var j = Math.floor(Math.random() * (k + 1));
+        var t = a[k]; a[k] = a[j]; a[j] = t;
+      }
+      return a;
+    });
+  }
+
+  function buildSegs() {
+    var h = '';
+    for (var k = 0; k < Q.length; k++) h += '<span></span>';
+    $('segs').innerHTML = h;
+  }
+
+  function renderQ() {
+    var q = Q[idx];
+    $('qcount').textContent = (idx + 1) + ' / ' + Q.length;
+    var segs = $('segs').children;
+    for (var k = 0; k < segs.length; k++) segs[k].className = (k <= idx) ? 'on' : '';
+    $('qtext').textContent = q.q;
+    var box = $('opts');
+    box.innerHTML = '';
+    ord[idx].forEach(function (n, pos) {
+      var opt = q.o[n];
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'opt';
+      b.setAttribute('aria-pressed', ans[idx] === n ? 'true' : 'false');
+      var l = document.createElement('span');
+      l.className = 'ltr';
+      l.textContent = String.fromCharCode(65 + pos);
+      var t = document.createElement('span');
+      t.className = 'txt';
+      t.textContent = opt[0];
+      b.appendChild(l);
+      b.appendChild(t);
+      b.addEventListener('click', function () { pick(n, b); });
+      box.appendChild(b);
+    });
+    $('back').hidden = (idx === 0);
+  }
+
+  function pick(n, btn) {
+    if (locked) return;
+    locked = true;
+    ans[idx] = n;
+    Array.prototype.forEach.call($('opts').children, function (c) { c.setAttribute('aria-pressed', 'false'); });
+    btn.setAttribute('aria-pressed', 'true');
+    setTimeout(function () {
+      locked = false;
+      if (idx < Q.length - 1) { idx++; renderQ(); } else { finish(); }
+    }, reduce ? 0 : 260);
+  }
+
+  function calcScore() {
+    var sum = 0;
+    for (var k = 0; k < Q.length; k++) sum += Q[k].o[ans[k]][1];
+    return Math.max(0, Math.min(100, Math.round(sum / MAXPTS * 100)));
+  }
+
+  function countTraps() {
+    var c = 0;
+    for (var k = 0; k < Q.length; k++) if (Q[k].o[ans[k]][2]) c++;
+    return c;
+  }
+
+  function tierFor(score) {
+    for (var k = 0; k < TIERS.length; k++) if (score >= TIERS[k].min) return TIERS[k];
+    return TIERS[TIERS.length - 1];
+  }
+
+  function kmRef(km) {
+    if (km === 0) return 'nggak ke mana-mana';
+    if (km <= 180) return 'kira-kira Jakarta ke Bandung';
+    if (km <= 600) return 'kira-kira Jakarta ke Yogyakarta';
+    if (km <= 900) return 'kira-kira Jakarta ke Surabaya';
+    return 'lebih jauh dari Jakarta ke Denpasar';
+  }
+
+  function finish() {
+    var score = calcScore();
+    var tier = tierFor(score);
+    var a = $('n1').value.trim();
+    var b = $('n2').value.trim() || 'dia';
+    var who = a ? ('Skor kangen ' + a + ' ke ' + b) : ('Skor kangenku ke ' + b);
+    var km = score * 12;
+    var chats = Math.round(score / 100 * 40);
+    var traps = countTraps();
+
+    $('rwho').textContent = who;
+    $('rtier').textContent = tier.name;
+    $('rdesc').textContent = tier.desc;
+    $('skm').innerHTML = km.toLocaleString('id-ID') + ' km<small>' + kmRef(km) + '</small>';
+    $('schat').innerHTML = chats + 'x sehari<small>' + (chats === 0 ? 'dia tenang-tenang saja' : 'belum termasuk stiker') + '</small>';
+    $('strap').innerHTML = traps + ' dari ' + Q.length + '<small>' + (traps === 0 ? 'bersih, tidak ada yang lolos' : 'jawaban yang kelihatan romantis tapi menurunkan skor') + '</small>';
+    $('fallback').hidden = true;
+    $('toast').textContent = '';
+    copyText = who + ': ' + score + '/100 (' + tier.name + '). Rela menempuh ' + km.toLocaleString('id-ID') +
+      ' km dan kirim "lagi apa?" ' + chats + 'x sehari. Kena jebakan ' + traps + ' dari ' + Q.length + '. Berani adu skor?';
+
+    show('result');
+
+    var arc = $('arc');
+    arc.style.strokeDasharray = String(ARC_LEN);
+    arc.style.strokeDashoffset = String(ARC_LEN);
+    var target = ARC_LEN * (1 - score / 100);
+    var num = $('gnum');
+    if (reduce) {
+      arc.style.strokeDashoffset = String(target);
+      num.textContent = String(score);
+    } else {
+      num.textContent = '0';
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { arc.style.strokeDashoffset = String(target); });
+      });
+      var t0 = null, dur = 1300;
+      var step = function (ts) {
+        if (t0 === null) t0 = ts;
+        var p = Math.min(1, (ts - t0) / dur);
+        var e = 1 - Math.pow(1 - p, 3);
+        num.textContent = String(Math.round(score * e));
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+  }
+
+  function showFallback() {
+    var f = $('ftext');
+    f.value = copyText;
+    $('fallback').hidden = false;
+    f.focus();
+    f.select();
+    $('toast').textContent = 'Salin teks di atas secara manual.';
+  }
+
+  function doCopy() {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(copyText).then(function () {
+          $('fallback').hidden = true;
+          $('toast').textContent = 'Hasil sudah disalin. Tempel ke chat dia.';
+        }, showFallback);
+        return;
+      }
+    } catch (e) {}
+    showFallback();
+  }
+
+  $('start').addEventListener('click', function () {
+    idx = 0; ans = []; locked = false;
+    newOrder(); buildSegs(); renderQ(); show('quiz');
+  });
+  $('back').addEventListener('click', function () {
+    if (idx > 0 && !locked) { idx--; renderQ(); }
+  });
+  $('copy').addEventListener('click', doCopy);
+  $('retry').addEventListener('click', function () {
+    idx = 0; ans = []; locked = false;
+    newOrder(); renderQ(); show('quiz');
+  });
+
+  newOrder();
+  buildSegs();
+})();
+</script>
+
+</body></html>
